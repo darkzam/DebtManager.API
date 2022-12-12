@@ -8,5 +8,7 @@
         public string Title { get; set; }
         public decimal Total { get; set; }
         public decimal ServiceRate { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public DateTime UpdatedDate { get; set; }
     }
 }
