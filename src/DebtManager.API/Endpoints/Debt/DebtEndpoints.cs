@@ -1,4 +1,6 @@
-﻿public static class DebtEndpoints
+﻿using DebtManager.Domain.Models;
+
+public static class DebtEndpoints
 {
     public const string baseRoute = "api/";
     public static void Initialize(WebApplication webApplication)
@@ -11,8 +13,8 @@
         }
     }
 
-    private static IList<BaseEndpoint> RegisterEndpoints(WebApplication webApplication)
+    private static IList<BaseEndpoint<Debt>> RegisterEndpoints(WebApplication webApplication)
     {
-        return new List<BaseEndpoint> { new GetDebt(new Uri(baseRoute, UriKind.Relative), webApplication) };
+        return new List<BaseEndpoint<Debt>> { new GetDebt(new Uri(baseRoute, UriKind.Relative), webApplication) };
     }
 }
