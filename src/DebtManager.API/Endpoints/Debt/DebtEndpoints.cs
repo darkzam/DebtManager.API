@@ -13,6 +13,6 @@
 
     private static IList<BaseEndpoint> RegisterEndpoints(WebApplication webApplication)
     {
-        return new List<BaseEndpoint> { new GetDebt(new Uri(baseRoute), webApplication) };
+        return new List<BaseEndpoint> { new GetDebt(new Uri(baseRoute, UriKind.Relative), webApplication) };
     }
 }

@@ -9,19 +9,19 @@ public class GetDebt : BaseEndpoint
     {
         BasePath = baseRoute ?? throw new ArgumentNullException(nameof(baseRoute));
         Action = new Uri(nameof(Debt), UriKind.Relative);
-        Route = new Uri(BasePath, Action);
+        Route = new Uri($"{BasePath.ToString()}{Action.ToString()}", UriKind.Relative);
         HttpVerb = HttpVerb.Get;
         _webApplication = webApplication ?? throw new ArgumentNullException(nameof(webApplication));
     }
 
     public override void Initialize()
     {
-        _webApplication.Map(Route.AbsoluteUri, ProcessRequest);
+        _webApplication.Map(Route.OriginalString, ProcessRequest);
     }
 
-    private async Task<IResult> ProcessRequest(IDebtRepository debtRepository)
+    private async Task<IResult> ProcessRequest(IUnitOfWork unitOfWork)
     {
-        var result = await debtRepository.GetAll();
+        var result = await unitOfWork.DebtRepository.GetAll();
 
         return Results.Ok(result);
     }
