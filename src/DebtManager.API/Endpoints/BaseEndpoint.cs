@@ -11,7 +11,7 @@
                            WebApplication webApplication)
     {
         BasePath = baseRoute ?? throw new ArgumentNullException(nameof(baseRoute));
-        Action = new Uri(nameof(T), UriKind.Relative);
+        Action = new Uri(typeof(T).Name, UriKind.Relative);
         Route = new Uri($"{BasePath.ToString()}{Action.ToString()}", UriKind.Relative);
         HttpVerb = HttpVerb.Get;
         WebApplication = webApplication ?? throw new ArgumentNullException(nameof(webApplication));
