@@ -15,6 +15,7 @@ public static class DebtEndpoints
 
     private static IList<BaseEndpoint<Debt>> RegisterEndpoints(WebApplication webApplication)
     {
-        return new List<BaseEndpoint<Debt>> { new GetDebt(new Uri(baseRoute, UriKind.Relative), webApplication) };
+        return new List<BaseEndpoint<Debt>> { new GetDebt(new Uri(baseRoute, UriKind.Relative), webApplication),
+                                              new PostDebt(new Uri(baseRoute, UriKind.Relative), webApplication)};
     }
 }
