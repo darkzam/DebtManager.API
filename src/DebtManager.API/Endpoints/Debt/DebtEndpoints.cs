@@ -17,6 +17,7 @@ public static class DebtEndpoints
     {
         return new List<BaseEndpoint<Debt>> { new GetDebt(new Uri(baseRoute, UriKind.Relative), webApplication),
                                               new PostDebt(new Uri(baseRoute, UriKind.Relative), webApplication),
-                                              new PutDebt(new Uri(baseRoute, UriKind.Relative), webApplication)};
+                                              new PutDebt(new Uri(baseRoute, UriKind.Relative), webApplication),
+                                              new DeleteDebt(new Uri(baseRoute, UriKind.Relative), webApplication)};
     }
 }
