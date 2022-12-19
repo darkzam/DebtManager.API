@@ -24,12 +24,12 @@ public class PostDebt : BaseEndpoint<Debt>
             return Results.BadRequest();
         }
 
-        if (debtDto.Total.Equals(decimal.Zero))
+        if (debtDto.Total <= decimal.Zero)
         {
             return Results.BadRequest(nameof(debtDto.Total));
         }
 
-        var user = await unitOfWork.UserRepository.Find(debtDto.HostId);
+        var user = await unitOfWork.UserRepository.SearchBy(x => x.Username == debtDto.Username);
 
         var newDebt = new Debt
         {
@@ -37,7 +37,7 @@ public class PostDebt : BaseEndpoint<Debt>
             Title = debtDto.Title,
             Total = debtDto.Total,
             ServiceRate = debtDto.ServiceRate,
-            Host = user,
+            Host = user.FirstOrDefault(),
             CreatedDate = DateTime.UtcNow,
             UpdatedDate = DateTime.UtcNow
         };
@@ -46,7 +46,7 @@ public class PostDebt : BaseEndpoint<Debt>
 
         await unitOfWork.CompleteAsync();
 
-        return Results.Ok(result);
+        return Results.Ok(new DebtDto(result));
     }
 }
 

@@ -15,6 +15,6 @@ public class GetDebt : BaseEndpoint<Debt>
     {
         var result = await unitOfWork.DebtRepository.GetAll();
 
-        return Results.Ok(result);
+        return Results.Ok(result.Select(x => new DebtDto(x)));
     }
 }
