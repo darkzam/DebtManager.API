@@ -8,6 +8,10 @@ namespace DebtManager.Infrastructure.Contexts
         public DebtManagerContext(DbContextOptions<DebtManagerContext> dbContextOptions) : base(dbContextOptions)
         { }
 
-        public DbSet<Debt> Debts { get; set; }
+        public DbSet<Debt> Debt { get; set; }
+        public DbSet<DebtDetail> DebtDetail { get; set; }
+        public DbSet<DebtDetailUser> DebtDetailUser { get; set; }
+        public DbSet<Product> Product { get; set; }
+        public DbSet<User> User { get; set; }
     }
 }
