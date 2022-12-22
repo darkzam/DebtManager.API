@@ -4,6 +4,7 @@
     {
         IDebtRepository DebtRepository { get; }
         IUserRepository UserRepository { get; }
+        IDebtDetailRepository DebtDetailRepository { get; }
         Task<int> CompleteAsync();
     }
 }
