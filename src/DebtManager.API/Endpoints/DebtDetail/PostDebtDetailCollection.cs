@@ -1,5 +1,7 @@
-﻿using DebtManager.Application.Common.Interfaces;
+﻿using DebtManager.API.Models;
+using DebtManager.Application.Common.Interfaces;
 using DebtManager.Domain.Models;
+using Microsoft.AspNetCore.Mvc;
 
 public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
 {
@@ -8,22 +10,42 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
 
     public override void Initialize()
     {
-        WebApplication.MapPost($"{Route.OriginalString}/collection", ProcessRequest);
+        WebApplication.MapPost($"{Route.OriginalString}s", ProcessRequest);
     }
 
-    private async Task<IResult> ProcessRequest(IEnumerable<DebtDetailDto> debtDetailDtos,
+    private async Task<IResult> ProcessRequest([FromRoute] string debtCode,
+                                               [FromBody] IEnumerable<DebtDetailGroupDto> debtDetailGroups,
                                                IUnitOfWork unitOfWork)
     {
-        if (debtDetailDtos is null || !debtDetailDtos.Any())
+        if (string.IsNullOrWhiteSpace(debtCode))
         {
-            return Results.BadRequest();
+            return Results.BadRequest($"Provided {nameof(debtCode)} is invalid.");
         }
 
-        var taskResults = debtDetailDtos.Select(x => ProcessDetail(x, unitOfWork));
+        var debts = await unitOfWork.DebtRepository.SearchBy(x => x.Code == debtCode
+                                                                            .Trim()
+                                                                            .ToLower()
+                                                                            .RemoveAccents());
+
+        if (debts.FirstOrDefault() is null)
+        {
+            return Results.NotFound($"{nameof(debtCode)} provided does not exist in the system.");
+        }
+
+        if (debtDetailGroups is null || !debtDetailGroups.Any())
+        {
+            return Results.BadRequest(nameof(debtDetailGroups));
+        }
+
+        //To-Do find a way to prevent duplicity of products, add their amounts if they are the same one.
+
+        var taskResults = debtDetailGroups.Select(x => ProcessDetailGroup(debts.FirstOrDefault(),
+                                                                          x,
+                                                                          unitOfWork));
 
         var results = await Task.WhenAll(taskResults);
 
-        var debtDetails = results.Where(x => x.DebtDetail != null).Select(x => x.DebtDetail);
+        var debtDetails = results.Where(x => x.DebtDetails != null && x.DebtDetails.Any()).SelectMany(x => x.DebtDetails);
 
         unitOfWork.DebtDetailRepository.CreateCollection(debtDetails);
 
@@ -33,50 +55,28 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
         return Results.Ok(results);
     }
 
-    private async Task<ProcessDetailResult> ProcessDetail(DebtDetailDto debtDetailDto,
-                                                          IUnitOfWork unitOfWork)
+    private async Task<ProcessDetailGroupResult> ProcessDetailGroup(Debt debt,
+                                                                    DebtDetailGroupDto detailGroup,
+                                                                    IUnitOfWork unitOfWork)
     {
-        if (string.IsNullOrWhiteSpace(debtDetailDto.DebtCode))
+        if (string.IsNullOrWhiteSpace(detailGroup.ProductName))
         {
-            return new ProcessDetailResult
+            return new ProcessDetailGroupResult
             {
                 Success = false,
-                Message = $"{nameof(debtDetailDto.DebtCode)} is invalid."
+                Message = $"{nameof(detailGroup.ProductName)} is invalid."
             };
         }
 
-        if (string.IsNullOrWhiteSpace(debtDetailDto.ProductName))
-        {
-            return new ProcessDetailResult
-            {
-                Success = false,
-                Message = $"{nameof(debtDetailDto.ProductName)} is invalid."
-            };
-        }
-
-        var debts = await unitOfWork.DebtRepository.SearchBy(x => x.Code == debtDetailDto.DebtCode
-                                                                                .Trim()
-                                                                                .ToLower()
-                                                                                .RemoveAccents());
-
-        if (debts.FirstOrDefault() is null)
-        {
-            return new ProcessDetailResult
-            {
-                Success = false,
-                Message = $"{nameof(debtDetailDto.DebtCode)} provided does not exist in the system."
-            };
-        }
-
-        var products = await unitOfWork.ProductRepository.SearchBy(x => x.Name == debtDetailDto.ProductName
-                                                                                                .Trim()
-                                                                                                .ToLower()
-                                                                                                .RemoveAccents());
+        var products = await unitOfWork.ProductRepository.SearchBy(x => x.Name == detailGroup.ProductName
+                                                                                            .Trim()
+                                                                                            .ToLower()
+                                                                                            .RemoveAccents());
 
         var product = products.FirstOrDefault() != null ? products.FirstOrDefault() :
                                                             new Product()
                                                             {
-                                                                Name = debtDetailDto.ProductName
+                                                                Name = detailGroup.ProductName
                                                                                     .Trim()
                                                                                     .ToLower()
                                                                                     .RemoveAccents(),
@@ -84,25 +84,22 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
                                                                 UpdatedDate = DateTime.UtcNow
                                                             };
 
-        var debtDetail = new DebtDetail()
+        var debtDetails = new List<DebtDetail>();
+        for (var i = 0; i < detailGroup.Amount; i++)
         {
-            Debt = debts.FirstOrDefault(),
-            Product = product,
-            CreatedDate = DateTime.UtcNow,
-            UpdatedDate = DateTime.UtcNow
-        };
+            debtDetails.Add(new DebtDetail()
+            {
+                Debt = debt,
+                Product = product,
+                CreatedDate = DateTime.UtcNow,
+                UpdatedDate = DateTime.UtcNow
+            });
+        }
 
-        return new ProcessDetailResult()
+        return new ProcessDetailGroupResult()
         {
             Success = true,
-            DebtDetail = debtDetail,
+            DebtDetails = debtDetails,
         };
-    }
-
-    public class ProcessDetailResult
-    {
-        public string Message { get; set; }
-        public bool Success { get; set; }
-        public DebtDetail DebtDetail { get; set; }
     }
 }
