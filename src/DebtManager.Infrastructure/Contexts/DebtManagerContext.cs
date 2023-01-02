@@ -13,5 +13,7 @@ namespace DebtManager.Infrastructure.Contexts
         public DbSet<DebtDetailUser> DebtDetailUser { get; set; }
         public DbSet<Product> Product { get; set; }
         public DbSet<User> User { get; set; }
+        public DbSet<Business> Business { get; set; }
+        public DbSet<Price> Price { get; set; }
     }
 }

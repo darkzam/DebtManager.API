@@ -39,11 +39,15 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
 
         //To-Do find a way to prevent duplicity of products, add their amounts if they are the same one.
 
-        var taskResults = debtDetailGroups.Select(x => ProcessDetailGroup(debts.FirstOrDefault(),
-                                                                          x,
-                                                                          unitOfWork));
+        var results = new List<ProcessDetailGroupResult>();
+        foreach (var debtDetailGroup in debtDetailGroups)
+        {
+            var result = await ProcessDetailGroup(debts.FirstOrDefault(),
+                                                  debtDetailGroup,
+                                                  unitOfWork);
 
-        var results = await Task.WhenAll(taskResults);
+            results.Add(result);
+        }
 
         var debtDetails = results.Where(x => x.DebtDetails != null && x.DebtDetails.Any()).SelectMany(x => x.DebtDetails);
 
@@ -51,14 +55,36 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
 
         await unitOfWork.CompleteAsync();
 
-        //To-Do map DebtDetail entities to Dtos before returning
-        return Results.Ok(results);
+        return Results.Ok(results.Select(x => new
+        {
+            Success = x.Success,
+            Message = x.Message,
+            DebtDetails = x.DebtDetails?.Select(y => new DebtDetailDto(y))
+        }));
     }
 
     private async Task<ProcessDetailGroupResult> ProcessDetailGroup(Debt debt,
                                                                     DebtDetailGroupDto detailGroup,
                                                                     IUnitOfWork unitOfWork)
     {
+        if (detailGroup.Amount == 0)
+        {
+            return new ProcessDetailGroupResult
+            {
+                Success = false,
+                Message = $"{nameof(detailGroup.Amount)} is invalid."
+            };
+        }
+
+        if (detailGroup.Total < 1)
+        {
+            return new ProcessDetailGroupResult
+            {
+                Success = false,
+                Message = $"{nameof(detailGroup.Total)} is invalid."
+            };
+        }
+
         if (string.IsNullOrWhiteSpace(detailGroup.ProductName))
         {
             return new ProcessDetailGroupResult
@@ -83,6 +109,23 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
                                                                 CreatedDate = DateTime.UtcNow,
                                                                 UpdatedDate = DateTime.UtcNow
                                                             };
+
+        var prices = new List<Price>();
+        if (products.FirstOrDefault() != null)
+        {
+            prices = (await unitOfWork.PriceRepository.SearchBy(x => x.Product.Id == product.Id)).ToList();
+        }
+
+        if (prices.FirstOrDefault() is null)
+        {
+            decimal value = detailGroup.Total / detailGroup.Amount;
+            unitOfWork.PriceRepository.Create(new Price()
+            {
+                Product = product,
+                Date = DateTime.UtcNow,
+                Value = value
+            });
+        }
 
         var debtDetails = new List<DebtDetail>();
         for (var i = 0; i < detailGroup.Amount; i++)

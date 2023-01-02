@@ -15,6 +15,7 @@ namespace DebtManager.Infrastructure.Repositories
         public IUserRepository UserRepository => new UserRepository(_DebtManagerContext);
         public IDebtDetailRepository DebtDetailRepository => new DebtDetailRepository(_DebtManagerContext);
         public IProductRepository ProductRepository => new ProductRepository(_DebtManagerContext);
+        public IPriceRepository PriceRepository => new PriceRepository(_DebtManagerContext);
         public async Task<int> CompleteAsync()
         {
             return await _DebtManagerContext.SaveChangesAsync();
