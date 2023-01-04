@@ -4,6 +4,7 @@ using DebtManager.Infrastructure.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DebtManager.Infrastructure.Migrations
 {
     [DbContext(typeof(DebtManagerContext))]
-    partial class DebtManagerContextModelSnapshot : ModelSnapshot
+    [Migration("20230102131355_Added_Business_And_Price_Tables")]
+    partial class AddedBusinessAndPriceTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

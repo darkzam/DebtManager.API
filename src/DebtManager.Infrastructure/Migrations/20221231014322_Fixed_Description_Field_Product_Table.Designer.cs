@@ -4,6 +4,7 @@ using DebtManager.Infrastructure.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DebtManager.Infrastructure.Migrations
 {
     [DbContext(typeof(DebtManagerContext))]
-    partial class DebtManagerContextModelSnapshot : ModelSnapshot
+    [Migration("20221231014322_Fixed_Description_Field_Product_Table")]
+    partial class FixedDescriptionFieldProductTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,30 +24,6 @@ namespace DebtManager.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("DebtManager.Domain.Models.Business", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("UpdatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Business");
-                });
 
             modelBuilder.Entity("DebtManager.Domain.Models.Debt", b =>
                 {
@@ -139,33 +118,6 @@ namespace DebtManager.Infrastructure.Migrations
                     b.ToTable("DebtDetailUser");
                 });
 
-            modelBuilder.Entity("DebtManager.Domain.Models.Price", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("BusinessId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("ProductId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("Value")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BusinessId");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("Price");
-                });
-
             modelBuilder.Entity("DebtManager.Domain.Models.Product", b =>
                 {
                     b.Property<Guid>("Id")
@@ -248,21 +200,6 @@ namespace DebtManager.Infrastructure.Migrations
                     b.Navigation("DebtDetail");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("DebtManager.Domain.Models.Price", b =>
-                {
-                    b.HasOne("DebtManager.Domain.Models.Business", "Business")
-                        .WithMany()
-                        .HasForeignKey("BusinessId");
-
-                    b.HasOne("DebtManager.Domain.Models.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId");
-
-                    b.Navigation("Business");
-
-                    b.Navigation("Product");
                 });
 #pragma warning restore 612, 618
         }
