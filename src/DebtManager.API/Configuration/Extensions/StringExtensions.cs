@@ -9,6 +9,8 @@ public static class StringExtensions
         return string.Concat(Regex.Replace(text, @"(?i)[\p{L}-[ña-z]]+",
                              m => m.Value.Normalize(NormalizationForm.FormD))
                      .Where(c => CharUnicodeInfo.GetUnicodeCategory(c)
-                                != UnicodeCategory.NonSpacingMark));
+                                != UnicodeCategory.NonSpacingMark
+                                && !char.IsPunctuation(c)
+                                ));
     }
 }

@@ -37,10 +37,53 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
             return Results.BadRequest(nameof(debtDetailGroups));
         }
 
-        //To-Do find a way to prevent duplicity of products, add their amounts if they are the same one.
+        var invalidModels = debtDetailGroups.Select(x => x.ValidateModel())
+                                            .Where(x => !x.Success);
+
+        if (invalidModels.Any())
+        {
+            return Results.BadRequest(invalidModels.Select(x => x.Message));
+        }
+
+        debtDetailGroups = debtDetailGroups.Select(x => new DebtDetailGroupDto()
+        {
+            ProductName = x.ProductName.Trim()
+                                       .ToLower()
+                                       .RemoveAccents(),
+            Amount = x.Amount,
+            Total = x.Total
+        });
+
+        var productPrices = debtDetailGroups.Select(x =>
+                                                new DebtDetailGroup()
+                                                {
+                                                    ProductName = x.ProductName,
+                                                    Price = x.Total / x.Amount,
+                                                    Amount = x.Amount,
+                                                })
+                                             .GroupBy(x => new
+                                             {
+                                                 x.ProductName,
+                                                 x.Price
+                                             });
+
+        var multiplePricedProduct = productPrices.GroupBy(x => x.Key.ProductName)
+                                                 .Where(group => group.Count() > 1);
+
+        if (multiplePricedProduct.Any())
+        {
+            return Results.BadRequest($"Multiple different prices were submitted for '{multiplePricedProduct.First().Key}'");
+        }
+
+        var curatedProducts = productPrices.Select(group => new DebtDetailGroup()
+        {
+            ProductName = group.Key.ProductName,
+            Amount = group.Sum(x => x.Amount),
+            Price = group.Key.Price
+        });
 
         var results = new List<ProcessDetailGroupResult>();
-        foreach (var debtDetailGroup in debtDetailGroups)
+        foreach (var debtDetailGroup in curatedProducts)
         {
             var result = await ProcessDetailGroup(debts.FirstOrDefault(),
                                                   debtDetailGroup,
@@ -55,57 +98,41 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
 
         await unitOfWork.CompleteAsync();
 
-        return Results.Ok(results.Select(x => new
+        var currentDebtDetails = await unitOfWork.DebtDetailRepository.SearchBy(x => x.Debt.Id == debts.FirstOrDefault().Id);
+
+        var currentGroupDtos = currentDebtDetails.Select(x => new DebtDetailDto(x))
+                                                 .GroupBy(x => x.ProductName)
+                                                 .Select(group => new DebtDetailGroupDto()
+                                                 {
+                                                     ProductName = group.Key,
+                                                     Amount = group.Count()
+                                                 });
+
+        var addedDtos = results.SelectMany(x => x.DebtDetails?.Select(y => new DebtDetailDto(y)));
+
+        var addedGroupDtos = addedDtos.GroupBy(x => x.ProductName).Select(group => new DebtDetailGroupDto()
         {
-            Success = x.Success,
-            Message = x.Message,
-            DebtDetails = x.DebtDetails?.Select(y => new DebtDetailDto(y))
-        }));
+            ProductName = group.Key,
+            Amount = group.Count()
+        });
+
+        return Results.Ok(new
+        {
+            Current = currentGroupDtos,
+            Added = addedGroupDtos
+        });
     }
 
     private async Task<ProcessDetailGroupResult> ProcessDetailGroup(Debt debt,
-                                                                    DebtDetailGroupDto detailGroup,
+                                                                    DebtDetailGroup detailGroup,
                                                                     IUnitOfWork unitOfWork)
     {
-        if (detailGroup.Amount == 0)
-        {
-            return new ProcessDetailGroupResult
-            {
-                Success = false,
-                Message = $"{nameof(detailGroup.Amount)} is invalid."
-            };
-        }
-
-        if (detailGroup.Total < 1)
-        {
-            return new ProcessDetailGroupResult
-            {
-                Success = false,
-                Message = $"{nameof(detailGroup.Total)} is invalid."
-            };
-        }
-
-        if (string.IsNullOrWhiteSpace(detailGroup.ProductName))
-        {
-            return new ProcessDetailGroupResult
-            {
-                Success = false,
-                Message = $"{nameof(detailGroup.ProductName)} is invalid."
-            };
-        }
-
-        var products = await unitOfWork.ProductRepository.SearchBy(x => x.Name == detailGroup.ProductName
-                                                                                            .Trim()
-                                                                                            .ToLower()
-                                                                                            .RemoveAccents());
+        var products = await unitOfWork.ProductRepository.SearchBy(x => x.Name == detailGroup.ProductName);
 
         var product = products.FirstOrDefault() != null ? products.FirstOrDefault() :
                                                             new Product()
                                                             {
-                                                                Name = detailGroup.ProductName
-                                                                                    .Trim()
-                                                                                    .ToLower()
-                                                                                    .RemoveAccents(),
+                                                                Name = detailGroup.ProductName,
                                                                 CreatedDate = DateTime.UtcNow,
                                                                 UpdatedDate = DateTime.UtcNow
                                                             };
@@ -118,12 +145,11 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
 
         if (prices.FirstOrDefault() is null)
         {
-            decimal value = detailGroup.Total / detailGroup.Amount;
             unitOfWork.PriceRepository.Create(new Price()
             {
                 Product = product,
                 Date = DateTime.UtcNow,
-                Value = value
+                Value = detailGroup.Price
             });
         }
 
