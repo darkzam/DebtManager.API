@@ -100,21 +100,33 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
 
         var currentDebtDetails = await unitOfWork.DebtDetailRepository.SearchBy(x => x.Debt.Id == debts.FirstOrDefault().Id);
 
-        var currentGroupDtos = currentDebtDetails.Select(x => new DebtDetailDto(x))
-                                                 .GroupBy(x => x.ProductName)
-                                                 .Select(group => new DebtDetailGroupDto()
-                                                 {
-                                                     ProductName = group.Key,
-                                                     Amount = group.Count()
-                                                 });
+        var prices = await unitOfWork.PriceRepository.GetAll();
 
-        var addedDtos = results.SelectMany(x => x.DebtDetails?.Select(y => new DebtDetailDto(y)));
+        var currentGroupDtos = currentDebtDetails.GroupBy(x => x.Product)
+                                                 .Join(prices,
+                                                       x => x.Key.Id,
+                                                       y => y.Product.Id,
+                                                       (x, y) => new DebtDetailGroupDto()
+                                                       {
+                                                           ProductName = x.Key.Name,
+                                                           Amount = x.Count(),
+                                                           Total = x.Count() * y.Value,
+                                                           Price = y.Value
+                                                       });
 
-        var addedGroupDtos = addedDtos.GroupBy(x => x.ProductName).Select(group => new DebtDetailGroupDto()
-        {
-            ProductName = group.Key,
-            Amount = group.Count()
-        });
+        var addedDetails = results.SelectMany(x => x.DebtDetails?.Select(y => y));
+
+        var addedGroupDtos = addedDetails.GroupBy(x => x.Product)
+                                         .Join(prices,
+                                                x => x.Key.Id,
+                                                y => y.Product.Id,
+                                                (x, y) => new DebtDetailGroupDto()
+                                                {
+                                                    ProductName = x.Key.Name,
+                                                    Amount = x.Count(),
+                                                    Total = x.Count() * y.Value,
+                                                    Price = y.Value
+                                                });
 
         return Results.Ok(new
         {
