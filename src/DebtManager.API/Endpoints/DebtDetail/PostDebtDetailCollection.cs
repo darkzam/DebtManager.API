@@ -34,9 +34,12 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
             results.Add(result);
         }
 
-        var debtDetails = results.Where(x => x.DebtDetails != null && x.DebtDetails.Any()).SelectMany(x => x.DebtDetails);
+        var addDebtDetails = results.Where(x => x.DebtDetails != null
+                                          && x.DebtDetails.Any()
+                                          && x.Operation == EntityOperation.Add)
+                                 .SelectMany(x => x.DebtDetails);
 
-        unitOfWork.DebtDetailRepository.CreateCollection(debtDetails);
+        unitOfWork.DebtDetailRepository.CreateCollection(addDebtDetails);
 
         await unitOfWork.CompleteAsync();
 
