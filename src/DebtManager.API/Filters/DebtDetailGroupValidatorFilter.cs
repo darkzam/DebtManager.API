@@ -36,7 +36,7 @@
                                                     new DebtDetailGroup()
                                                     {
                                                         ProductName = x.ProductName,
-                                                        Price = x.Total / x.Amount,
+                                                        Price = (x.Total == 0 || x.Amount == 0) ? 0 : x.Total / x.Amount,
                                                         Amount = x.Amount,
                                                     })
                                                  .GroupBy(x => new

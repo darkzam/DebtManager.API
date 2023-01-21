@@ -56,34 +56,45 @@ public class PatchDebtDetailCollection : BaseEndpoint<DebtDetail>
 
         var currentGroupDtos = currentDebtDetails.GroupBy(x => x.Product)
                                                  .Join(prices,
-                                                       x => x.Key.Id,
-                                                       y => y.Product.Id,
+                                                       x => x.Key?.Id,
+                                                       y => y.Product?.Id,
                                                        (x, y) => new DebtDetailGroupDto()
                                                        {
-                                                           ProductName = x.Key.Name,
+                                                           ProductName = x.Key?.Name,
                                                            Amount = x.Count(),
                                                            Total = x.Count() * y.Value,
                                                            Price = y.Value
                                                        });
 
-        var addedDetails = results.SelectMany(x => x.DebtDetails?.Select(y => y));
-
-        var addedGroupDtos = addedDetails.GroupBy(x => x.Product)
-                                         .Join(prices,
-                                                x => x.Key.Id,
-                                                y => y.Product.Id,
+        var addedGroupDtos = addDebtDetails.GroupBy(x => x.Product)
+                                           .Join(prices,
+                                                x => x.Key?.Id,
+                                                y => y.Product?.Id,
                                                 (x, y) => new DebtDetailGroupDto()
                                                 {
-                                                    ProductName = x.Key.Name,
+                                                    ProductName = x.Key?.Name,
                                                     Amount = x.Count(),
                                                     Total = x.Count() * y.Value,
                                                     Price = y.Value
                                                 });
 
+        var removedGroupDtos = removeDebtDetails.GroupBy(x => x.Product)
+                                                .Join(prices,
+                                                    x => x.Key?.Id,
+                                                    y => y.Product?.Id,
+                                                    (x, y) => new DebtDetailGroupDto()
+                                                    {
+                                                        ProductName = x.Key?.Name,
+                                                        Amount = x.Count(),
+                                                        Total = x.Count() * y.Value,
+                                                        Price = y.Value
+                                                    });
+
         return Results.Ok(new
         {
             Current = currentGroupDtos,
-            Added = addedGroupDtos
+            Added = addedGroupDtos,
+            Removed = removedGroupDtos
         });
     }
 

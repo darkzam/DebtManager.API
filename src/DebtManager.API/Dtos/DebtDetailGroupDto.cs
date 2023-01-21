@@ -9,7 +9,7 @@ public class DebtDetailGroupDto
 
     public ModelValidationResult ValidateModel()
     {
-        if (Amount == 0)
+        if (Amount < 0)
         {
             return new ModelValidationResult
             {
@@ -18,7 +18,7 @@ public class DebtDetailGroupDto
             };
         }
 
-        if (Total < 1)
+        if (Total < 0)
         {
             return new ModelValidationResult
             {
