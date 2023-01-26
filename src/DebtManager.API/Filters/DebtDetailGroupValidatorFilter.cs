@@ -26,9 +26,10 @@
             debtDetailGroups = debtDetailGroups.Select(x => new DebtDetailGroupDto()
             {
                 ProductName = x.ProductName.Trim()
-                                       .ToLower()
-                                       .RemoveAccents(),
+                                           .ToLower()
+                                           .RemoveAccents(),
                 Amount = x.Amount,
+                Price = x.Price,
                 Total = x.Total
             });
 
@@ -36,7 +37,7 @@
                                                     new DebtDetailGroup()
                                                     {
                                                         ProductName = x.ProductName,
-                                                        Price = (x.Total == 0 || x.Amount == 0) ? 0 : x.Total / x.Amount,
+                                                        Price = (x.Price > 0) ? x.Price : (x.Total == 0 || x.Amount == 0) ? 0 : x.Total / x.Amount,
                                                         Amount = x.Amount,
                                                     })
                                                  .GroupBy(x => new
