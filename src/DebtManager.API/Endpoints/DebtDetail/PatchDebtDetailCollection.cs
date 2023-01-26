@@ -18,6 +18,7 @@ public class PatchDebtDetailCollection : BaseEndpoint<DebtDetail>
 
     private async Task<IResult> ProcessRequest([FromRoute] string debtCode,
                                                [FromBody] IEnumerable<DebtDetailGroupDto> debtDetailGroups,
+                                               [FromQuery] bool? overridePrice,
                                                IUnitOfWork unitOfWork,
                                                HttpContext context)
     {
@@ -29,7 +30,8 @@ public class PatchDebtDetailCollection : BaseEndpoint<DebtDetail>
         {
             var result = await ProcessDetailGroup(debt,
                                                   group,
-                                                  unitOfWork);
+                                                  unitOfWork,
+                                                  overridePrice);
 
             results.Add(result);
         }
@@ -54,8 +56,11 @@ public class PatchDebtDetailCollection : BaseEndpoint<DebtDetail>
 
         var prices = await unitOfWork.PriceRepository.GetAll();
 
+        var latestPrices = prices.GroupBy(x => x.Product)
+                                 .Select(x => x.OrderByDescending(y => y.Date).First());
+
         var currentGroupDtos = currentDebtDetails.GroupBy(x => x.Product)
-                                                 .Join(prices,
+                                                 .Join(latestPrices,
                                                        x => x.Key?.Id,
                                                        y => y.Product?.Id,
                                                        (x, y) => new DebtDetailGroupDto()
@@ -67,7 +72,7 @@ public class PatchDebtDetailCollection : BaseEndpoint<DebtDetail>
                                                        });
 
         var addedGroupDtos = addDebtDetails.GroupBy(x => x.Product)
-                                           .Join(prices,
+                                           .Join(latestPrices,
                                                 x => x.Key?.Id,
                                                 y => y.Product?.Id,
                                                 (x, y) => new DebtDetailGroupDto()
@@ -79,7 +84,7 @@ public class PatchDebtDetailCollection : BaseEndpoint<DebtDetail>
                                                 });
 
         var removedGroupDtos = removeDebtDetails.GroupBy(x => x.Product)
-                                                .Join(prices,
+                                                .Join(latestPrices,
                                                     x => x.Key?.Id,
                                                     y => y.Product?.Id,
                                                     (x, y) => new DebtDetailGroupDto()
@@ -100,7 +105,8 @@ public class PatchDebtDetailCollection : BaseEndpoint<DebtDetail>
 
     private async Task<ProcessDetailGroupResult> ProcessDetailGroup(Debt debt,
                                                                     DebtDetailGroup debtDetailGroup,
-                                                                    IUnitOfWork unitOfWork)
+                                                                    IUnitOfWork unitOfWork,
+                                                                    bool? overridePrice)
     {
         var product = (await unitOfWork.ProductRepository.SearchBy(x => x.Name == debtDetailGroup.ProductName))
                                                          .FirstOrDefault();
@@ -112,6 +118,17 @@ public class PatchDebtDetailCollection : BaseEndpoint<DebtDetail>
                 Success = false,
                 Message = "Product not found",
             };
+        }
+
+        if ((!overridePrice.HasValue || overridePrice.Value)
+            && debtDetailGroup.Price > 0)
+        {
+            unitOfWork.PriceRepository.Create(new Price()
+            {
+                Product = product,
+                Date = DateTime.UtcNow,
+                Value = debtDetailGroup.Price
+            });
         }
 
         //To-DO: Make sure to grab unassigned Details only. Disjoined from the Charges (DebtDetailUser) table.

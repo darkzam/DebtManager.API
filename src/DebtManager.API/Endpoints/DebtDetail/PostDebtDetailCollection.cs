@@ -18,6 +18,7 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
 
     private async Task<IResult> ProcessRequest([FromRoute] string debtCode,
                                                [FromBody] IEnumerable<DebtDetailGroupDto> debtDetailGroups,
+                                               [FromQuery] bool? overridePrice,
                                                IUnitOfWork unitOfWork,
                                                HttpContext context)
     {
@@ -29,7 +30,8 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
         {
             var result = await ProcessDetailGroup(debt,
                                                   debtDetailGroup,
-                                                  unitOfWork);
+                                                  unitOfWork,
+                                                  overridePrice);
 
             results.Add(result);
         }
@@ -47,8 +49,11 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
 
         var prices = await unitOfWork.PriceRepository.GetAll();
 
+        var latestPrices = prices.GroupBy(x => x.Product)
+                                 .Select(x => x.OrderByDescending(y => y.Date).First());
+
         var currentGroupDtos = currentDebtDetails.GroupBy(x => x.Product)
-                                                 .Join(prices,
+                                                 .Join(latestPrices,
                                                        x => x.Key.Id,
                                                        y => y.Product.Id,
                                                        (x, y) => new DebtDetailGroupDto()
@@ -62,7 +67,7 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
         var addedDetails = results.SelectMany(x => x.DebtDetails?.Select(y => y));
 
         var addedGroupDtos = addedDetails.GroupBy(x => x.Product)
-                                         .Join(prices,
+                                         .Join(latestPrices,
                                                 x => x.Key.Id,
                                                 y => y.Product.Id,
                                                 (x, y) => new DebtDetailGroupDto()
@@ -82,7 +87,8 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
 
     private async Task<ProcessDetailGroupResult> ProcessDetailGroup(Debt debt,
                                                                     DebtDetailGroup detailGroup,
-                                                                    IUnitOfWork unitOfWork)
+                                                                    IUnitOfWork unitOfWork,
+                                                                    bool? overridePrice)
     {
         var products = await unitOfWork.ProductRepository.SearchBy(x => x.Name == detailGroup.ProductName);
 
@@ -94,13 +100,7 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
                                                                 UpdatedDate = DateTime.UtcNow
                                                             };
 
-        var prices = new List<Price>();
-        if (products.FirstOrDefault() != null)
-        {
-            prices = (await unitOfWork.PriceRepository.SearchBy(x => x.Product.Id == product.Id)).ToList();
-        }
-
-        if (prices.FirstOrDefault() is null)
+        if (!overridePrice.HasValue || overridePrice.Value)
         {
             unitOfWork.PriceRepository.Create(new Price()
             {
