@@ -29,7 +29,22 @@ public class PostDebt : BaseEndpoint<Debt>
             return Results.BadRequest(nameof(debtDto.Total));
         }
 
-        var business = await unitOfWork.BusinessRepository.SearchBy(x => x.Name == debtDto.BusinessName);
+        var business = (await unitOfWork.BusinessRepository.SearchBy(x => x.Name == debtDto.BusinessName.Trim()
+                                                                                                        .ToLower()
+                                                                                                        .RemoveAccents()))
+                        .FirstOrDefault();
+
+        if (business is null)
+        {
+            business = new Business()
+            {
+                Name = debtDto.BusinessName.Trim()
+                                           .ToLower()
+                                           .RemoveAccents(),
+                CreatedDate = DateTime.Now,
+                UpdatedDate = DateTime.Now
+            };
+        }
 
         var user = await unitOfWork.UserRepository.SearchBy(x => x.Username == debtDto.Username);
 
@@ -40,7 +55,7 @@ public class PostDebt : BaseEndpoint<Debt>
             Total = debtDto.Total,
             ServiceRate = debtDto.ServiceRate,
             Host = user.FirstOrDefault(),
-            Business = business.FirstOrDefault(),
+            Business = business,
             CreatedDate = DateTime.UtcNow,
             UpdatedDate = DateTime.UtcNow
         };
