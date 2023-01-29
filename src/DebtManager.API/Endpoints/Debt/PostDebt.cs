@@ -19,7 +19,9 @@ public class PostDebt : BaseEndpoint<Debt>
         }
 
         if (string.IsNullOrWhiteSpace(debtDto.Code) ||
-            string.IsNullOrWhiteSpace(debtDto.Title))
+            string.IsNullOrWhiteSpace(debtDto.Title) ||
+            string.IsNullOrWhiteSpace(debtDto.Username) ||
+            string.IsNullOrWhiteSpace(debtDto.BusinessName))
         {
             return Results.BadRequest();
         }
@@ -46,7 +48,9 @@ public class PostDebt : BaseEndpoint<Debt>
             };
         }
 
-        var user = await unitOfWork.UserRepository.SearchBy(x => x.Username == debtDto.Username);
+        var user = await unitOfWork.UserRepository.SearchBy(x => x.Username == debtDto.Username.Trim()
+                                                                                               .ToLower()
+                                                                                               .RemoveAccents());
 
         var newDebt = new Debt
         {
