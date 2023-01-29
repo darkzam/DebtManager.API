@@ -5,6 +5,7 @@ public class DebtDto
     public Guid Id { get; set; }
     public string Code { get; set; }
     public string Username { get; set; }
+    public string BusinessName { get; set; }
     public string Title { get; set; }
     public decimal Total { get; set; }
     public decimal ServiceRate { get; set; }
@@ -19,6 +20,7 @@ public class DebtDto
         Id = debt.Id;
         Code = debt.Code;
         Username = debt.Host?.Username;
+        BusinessName = debt.Business?.Name;
         Title = debt.Title;
         Total = debt.Total;
         ServiceRate = debt.ServiceRate;

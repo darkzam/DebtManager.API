@@ -7,6 +7,7 @@
         IDebtDetailRepository DebtDetailRepository { get; }
         IProductRepository ProductRepository { get; }
         IPriceRepository PriceRepository { get; }
+        IBusinessRepository BusinessRepository { get; }
         Task<int> CompleteAsync();
     }
 }

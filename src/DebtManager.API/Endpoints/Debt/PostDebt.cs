@@ -29,6 +29,8 @@ public class PostDebt : BaseEndpoint<Debt>
             return Results.BadRequest(nameof(debtDto.Total));
         }
 
+        var business = await unitOfWork.BusinessRepository.SearchBy(x => x.Name == debtDto.BusinessName);
+
         var user = await unitOfWork.UserRepository.SearchBy(x => x.Username == debtDto.Username);
 
         var newDebt = new Debt
@@ -38,6 +40,7 @@ public class PostDebt : BaseEndpoint<Debt>
             Total = debtDto.Total,
             ServiceRate = debtDto.ServiceRate,
             Host = user.FirstOrDefault(),
+            Business = business.FirstOrDefault(),
             CreatedDate = DateTime.UtcNow,
             UpdatedDate = DateTime.UtcNow
         };
