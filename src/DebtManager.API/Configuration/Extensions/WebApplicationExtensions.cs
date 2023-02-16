@@ -4,6 +4,7 @@
     {
         DebtEndpoints.Initialize(webApplication);
         DebtDetailEndpoints.Initialize(webApplication);
+        DebtDetailUserEndpoints.Initialize(webApplication);
         //UserEndpoints.Initialize();
         //DebtUserEndpoints.Initialize();
         //DebtMetadataEndpoints.Initialize();
