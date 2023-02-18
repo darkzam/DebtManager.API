@@ -25,7 +25,9 @@ public class PostDebtDetailUserCollection : BaseEndpoint<DebtDetailUser>
 
         foreach (var productCharges in productChargesCollection)
         {
-
+            _ = await ProcessProductCharges(debt,
+                                            productCharges,
+                                            unitOfWork);
         }
 
 
@@ -35,67 +37,83 @@ public class PostDebtDetailUserCollection : BaseEndpoint<DebtDetailUser>
         return Results.Ok();
     }
 
-    //private async Task<ProcessDetailGroupResult> ProcessProductCharges(Debt debt,
-    //                                                                   ProductCharges productCharges,
-    //                                                                   IUnitOfWork unitOfWork)
-    //{
-    //    var product = (await unitOfWork.ProductRepository.SearchBy(x => x.Name == productCharges.ProductName))
-    //                                                     .FirstOrDefault();
+    private async Task<ProcessDetailGroupResult> ProcessProductCharges(Debt debt,
+                                                                       ProductCharges productCharges,
+                                                                       IUnitOfWork unitOfWork)
+    {
+        var product = (await unitOfWork.ProductRepository.SearchBy(x => x.Name == productCharges.ProductName.Trim()
+                                                                                                           .ToLower()
+                                                                                                           .RemoveAccents()))
+                                                         .FirstOrDefault();
 
-    //    if (product is null)
-    //    {
-    //        return new ProcessDetailGroupResult()
-    //        {
-    //            Success = false,
-    //            Message = "Product not found",
-    //        };
-    //    }
+        if (product is null)
+        {
+            return new ProcessDetailGroupResult()
+            {
+                Success = false,
+                Message = "Product not found",
+            };
+        }
 
-    //    //To-DO: Make sure to grab unassigned Details only. Disjoined from the Charges (DebtDetailUser) table.
-    //    var currentDetails = await unitOfWork.DebtDetailRepository.SearchBy(x => x.Debt.Id == debt.Id
-    //                                                                          && x.Product.Id == product.Id);
+        //Compute current item charges status entry by entry
+        //and see how much of their 100% is assigned.
 
-    //    var difference = debtDetailGroup.Amount > currentDetails.Count() ?
-    //                     debtDetailGroup.Amount - currentDetails.Count() :
-    //                     currentDetails.Count() - debtDetailGroup.Amount;
+        //ideally all entries(DebtDetails)'s charges should total up to 100%.
+        //generate current Debt's DebtDetail Charges enumerable.
+        var currentDetails = await unitOfWork.DebtDetailRepository.SearchBy(x => x.Debt.Id == debt.Id
+                                                                              && x.Product.Id == product.Id);
 
-    //    if (difference == 0)
-    //    {
-    //        return new ProcessDetailGroupResult()
-    //        {
-    //            Success = true,
-    //            DebtDetails = new List<DebtDetail>(),
-    //            Operation = EntityOperation.None
-    //        };
-    //    }
+        var currentDetailsIds = currentDetails.Select(x => x.Id);
 
-    //    if (debtDetailGroup.Amount > currentDetails.Count())
-    //    {
-    //        var debtDetails = new List<DebtDetail>();
-    //        for (int i = 0; i < difference; i++)
-    //        {
-    //            debtDetails.Add(new DebtDetail()
-    //            {
-    //                Debt = debt,
-    //                Product = product,
-    //                CreatedDate = DateTime.UtcNow,
-    //                UpdatedDate = DateTime.UtcNow
-    //            });
-    //        }
+        var currentCharges = await unitOfWork.DebtDetailUserRepository.SearchBy(x => currentDetailsIds.Contains(x.DebtDetail.Id));
 
-    //        return new ProcessDetailGroupResult()
-    //        {
-    //            Success = true,
-    //            DebtDetails = debtDetails,
-    //            Operation = EntityOperation.Add
-    //        };
-    //    }
+        var groupedCharges = currentCharges.GroupBy(x => x.DebtDetail).Select(x => new { DebtDetail = x.Key, Total = x.Sum(y => y.Porcentage) });
 
-    //    return new ProcessDetailGroupResult()
-    //    {
-    //        Success = true,
-    //        DebtDetails = currentDetails.Take(difference),
-    //        Operation = EntityOperation.Remove
-    //    };
-    //}
+        var join = currentDetails.GroupJoin(groupedCharges, x => x.Id, y => y.DebtDetail.Id, (x, y) => new { DebtDetail = x.Id, Total = y.Any() ? y.First().Total : 0 });
+
+        return null;
+        
+        //var difference = debtDetailGroup.Amount > currentDetails.Count() ?
+        //                 debtDetailGroup.Amount - currentDetails.Count() :
+        //                 currentDetails.Count() - debtDetailGroup.Amount;
+
+        //if (difference == 0)
+        //{
+        //    return new ProcessDetailGroupResult()
+        //    {
+        //        Success = true,
+        //        DebtDetails = new List<DebtDetail>(),
+        //        Operation = EntityOperation.None
+        //    };
+        //}
+
+        //if (debtDetailGroup.Amount > currentDetails.Count())
+        //{
+        //    var debtDetails = new List<DebtDetail>();
+        //    for (int i = 0; i < difference; i++)
+        //    {
+        //        debtDetails.Add(new DebtDetail()
+        //        {
+        //            Debt = debt,
+        //            Product = product,
+        //            CreatedDate = DateTime.UtcNow,
+        //            UpdatedDate = DateTime.UtcNow
+        //        });
+        //    }
+
+        //    return new ProcessDetailGroupResult()
+        //    {
+        //        Success = true,
+        //        DebtDetails = debtDetails,
+        //        Operation = EntityOperation.Add
+        //    };
+        //}
+
+        //return new ProcessDetailGroupResult()
+        //{
+        //    Success = true,
+        //    DebtDetails = currentDetails.Take(difference),
+        //    Operation = EntityOperation.Remove
+        //};
+    }
 }
