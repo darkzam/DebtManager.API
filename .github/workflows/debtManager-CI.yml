@@ -1,0 +1,21 @@
+name: DebtManager-ValidationBuild
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Restore dependencies
+      run: dotnet restore ./src/DebtManager.sln
+    - name: Build
+      run: dotnet build ./src/DebtManager.sln --no-restore
+    - name: Test
+      run: dotnet test ./src/DebtManager.sln --no-build --verbosity normal
