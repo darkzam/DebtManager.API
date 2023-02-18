@@ -1,0 +1,40 @@
+name: Deploy to AppService .NET
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+    AZURE_APPSERVICE_NAME: DebtManager
+    AZURE_APPSERVICE_PATH: '.'
+    
+jobs:
+  build-and-deploy:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Login to Azure CLI
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+    - name: dotnet build and publish
+      run: |
+        dotnet build ./src/DebtManager.sln --configuration Debug
+        dotnet publish ./src/DebtManager.sln -c Release -o '${{ env.AZURE_APPSERVICE_PATH }}/myApp'
+        
+    - name: App Settings Variable Substitution
+      uses: microsoft/variable-substitution@v1
+      with:
+        files: '${{env.AZURE_APPSERVICE_PATH}}/myApp/appsettings.Development.json'
+      env:
+        ConnectionStrings.DebtManagerDb: '${{ secrets.CONNECTIONSTRING_DEBTMANAGER_DEV }}'
+        
+    - name: Deploy to App Service
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ env.AZURE_APPSERVICE_NAME }}
+        package: '${{ env.AZURE_APPSERVICE_PATH }}/myApp'
