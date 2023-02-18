@@ -1,6 +1,8 @@
 ﻿using DebtManager.Application.Common.Interfaces;
 using DebtManager.Domain.Models;
 using DebtManager.Infrastructure.Contexts;
+using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace DebtManager.Infrastructure.Repositories
 {
@@ -8,5 +10,13 @@ namespace DebtManager.Infrastructure.Repositories
     {
         public DebtDetailUserRepository(DebtManagerContext DebtManagerContext) : base(DebtManagerContext)
         { }
+
+        public override async Task<IEnumerable<DebtDetailUser>> SearchBy(Expression<Func<DebtDetailUser, bool>> predicate)
+        {
+            return await _dbContext.Set<DebtDetailUser>()
+                                   .Where(predicate)
+                                   .Include(x => x.User)
+                                   .ToListAsync();
+        }
     }
 }
