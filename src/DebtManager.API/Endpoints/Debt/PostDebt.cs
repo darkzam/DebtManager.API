@@ -19,7 +19,9 @@ public class PostDebt : BaseEndpoint<Debt>
         }
 
         if (string.IsNullOrWhiteSpace(debtDto.Code) ||
-            string.IsNullOrWhiteSpace(debtDto.Title))
+            string.IsNullOrWhiteSpace(debtDto.Title) ||
+            string.IsNullOrWhiteSpace(debtDto.Username) ||
+            string.IsNullOrWhiteSpace(debtDto.BusinessName))
         {
             return Results.BadRequest();
         }
@@ -29,7 +31,26 @@ public class PostDebt : BaseEndpoint<Debt>
             return Results.BadRequest(nameof(debtDto.Total));
         }
 
-        var user = await unitOfWork.UserRepository.SearchBy(x => x.Username == debtDto.Username);
+        var business = (await unitOfWork.BusinessRepository.SearchBy(x => x.Name == debtDto.BusinessName.Trim()
+                                                                                                        .ToLower()
+                                                                                                        .RemoveAccents()))
+                        .FirstOrDefault();
+
+        if (business is null)
+        {
+            business = new Business()
+            {
+                Name = debtDto.BusinessName.Trim()
+                                           .ToLower()
+                                           .RemoveAccents(),
+                CreatedDate = DateTime.Now,
+                UpdatedDate = DateTime.Now
+            };
+        }
+
+        var user = await unitOfWork.UserRepository.SearchBy(x => x.Username == debtDto.Username.Trim()
+                                                                                               .ToLower()
+                                                                                               .RemoveAccents());
 
         var newDebt = new Debt
         {
@@ -38,6 +59,7 @@ public class PostDebt : BaseEndpoint<Debt>
             Total = debtDto.Total,
             ServiceRate = debtDto.ServiceRate,
             Host = user.FirstOrDefault(),
+            Business = business,
             CreatedDate = DateTime.UtcNow,
             UpdatedDate = DateTime.UtcNow
         };

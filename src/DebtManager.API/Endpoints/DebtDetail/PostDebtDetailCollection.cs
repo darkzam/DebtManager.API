@@ -47,7 +47,7 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
 
         var currentDebtDetails = await unitOfWork.DebtDetailRepository.SearchBy(x => x.Debt.Id == debt.Id);
 
-        var prices = await unitOfWork.PriceRepository.GetAll();
+        var prices = await unitOfWork.PriceRepository.SearchBy(x => x.Business.Id == debt.Business.Id);
 
         var latestPrices = prices.GroupBy(x => x.Product)
                                  .Select(x => x.OrderByDescending(y => y.Date).First());
@@ -104,6 +104,7 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
         {
             unitOfWork.PriceRepository.Create(new Price()
             {
+                Business = debt.Business,
                 Product = product,
                 Date = DateTime.UtcNow,
                 Value = detailGroup.Price
