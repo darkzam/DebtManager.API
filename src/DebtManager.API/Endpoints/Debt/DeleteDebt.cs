@@ -12,7 +12,7 @@ public class DeleteDebt : BaseEndpoint<Debt>
         WebApplication.MapDelete($"{Route.OriginalString}/{{id}}", ProcessRequest)
                       .WithTags("Debts")
                       .AddEndpointFilter<AuthorizationFilter>();
-    }
+    }//
 
     private async Task<IResult> ProcessRequest(Guid id, IUnitOfWork unitOfWork)
     {
