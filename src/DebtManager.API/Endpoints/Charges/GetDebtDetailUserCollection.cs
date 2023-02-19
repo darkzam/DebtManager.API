@@ -13,6 +13,7 @@ public class GetDebtDetailUserCollection : BaseEndpoint<DebtDetailUser>
     {
         WebApplication.MapGet($"{BasePath.OriginalString}Charges", ProcessRequest)
                       .WithTags("Charges")
+                      .AddEndpointFilter<AuthorizationFilter>()
                       .AddEndpointFilter<DebtValidatorFilter>();
         //Add filter for validation of charges
     }

@@ -11,6 +11,7 @@ public class GetDebtDetailCollection : BaseEndpoint<DebtDetail>
     {
         WebApplication.MapGet($"{Route.OriginalString}s", ProcessRequest)
                       .WithTags("DebtDetails")
+                      .AddEndpointFilter<AuthorizationFilter>()
                       .AddEndpointFilter<DebtValidatorFilter>();
     }
 
