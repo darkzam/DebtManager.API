@@ -8,7 +8,8 @@ public class PutDebt : BaseEndpoint<Debt>
 
     public override void Initialize()
     {
-        WebApplication.MapPut(Route.OriginalString, ProcessRequest);
+        WebApplication.MapPut(Route.OriginalString, ProcessRequest)
+                      .WithTags("Debt");
     }
 
     private async Task<IResult> ProcessRequest(DebtDto debtDto, IUnitOfWork unitOfWork)
@@ -20,7 +21,7 @@ public class PutDebt : BaseEndpoint<Debt>
 
         if (debtDto.Id.Equals(Guid.Empty))
         {
-            return Results.BadRequest($"Provide a non-empty { nameof(debtDto.Id)}");
+            return Results.BadRequest($"Provide a non-empty {nameof(debtDto.Id)}");
         }
 
         var debt = await unitOfWork.DebtRepository.Find(debtDto.Id);
