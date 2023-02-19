@@ -12,7 +12,7 @@ public class GetDebt : BaseEndpoint<Debt>
         WebApplication.MapGet(Route.OriginalString, ProcessRequest)
                       .WithTags("Debts")
                       .AddEndpointFilter<AuthorizationFilter>();
-    }
+    }//awdawd
 
     private async Task<IResult> ProcessRequest(IUnitOfWork unitOfWork)
     {
