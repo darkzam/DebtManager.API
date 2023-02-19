@@ -31,26 +31,40 @@ public class PostDebt : BaseEndpoint<Debt>
             return Results.BadRequest(nameof(debtDto.Total));
         }
 
-        var business = (await unitOfWork.BusinessRepository.SearchBy(x => x.Name == debtDto.BusinessName.Trim()
-                                                                                                        .ToLower()
-                                                                                                        .RemoveAccents()))
+        debtDto.Code = debtDto.Code.Trim()
+                                   .ToLower()
+                                   .RemoveAccents()
+                                   .RemoveSpaces();
+
+        var debt = await unitOfWork.DebtRepository.SearchBy(x => x.Code == debtDto.Code);
+
+        if (debt.Any())
+        {
+            return Results.BadRequest($"DebtCode {debtDto.Code} is already in use");
+        }
+
+        debtDto.BusinessName = debtDto.BusinessName.Trim()
+                                                   .ToLower()
+                                                   .RemoveAccents();
+
+        var business = (await unitOfWork.BusinessRepository.SearchBy(x => x.Name == debtDto.BusinessName))
                         .FirstOrDefault();
 
         if (business is null)
         {
             business = new Business()
             {
-                Name = debtDto.BusinessName.Trim()
-                                           .ToLower()
-                                           .RemoveAccents(),
+                Name = debtDto.BusinessName,
                 CreatedDate = DateTime.Now,
                 UpdatedDate = DateTime.Now
             };
         }
 
-        var user = await unitOfWork.UserRepository.SearchBy(x => x.Username == debtDto.Username.Trim()
-                                                                                               .ToLower()
-                                                                                               .RemoveAccents());
+        debtDto.Username = debtDto.Username.Trim()
+                                           .ToLower()
+                                           .RemoveAccents();
+
+        var user = await unitOfWork.UserRepository.SearchBy(x => x.Username == debtDto.Username);
 
         var newDebt = new Debt
         {
