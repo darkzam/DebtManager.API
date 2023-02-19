@@ -12,7 +12,7 @@ public static class DebtDetailEndpoints
             endpoint.Initialize();
         }
     }
-
+    //
     private static IList<BaseEndpoint<DebtDetail>> RegisterEndpoints(WebApplication webApplication)
     {
         //To-Do implement a mechanism to provide routes for parent/children like routes.
