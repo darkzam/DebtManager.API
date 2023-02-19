@@ -14,6 +14,7 @@ public class PostDebtDetailUserCollection : BaseEndpoint<DebtDetailUser>
     {
         WebApplication.MapPost($"{BasePath.OriginalString}Charges", ProcessRequest)
                       .WithTags("Charges")
+                      .AddEndpointFilter<AuthorizationFilter>()
                       .AddEndpointFilter<DebtValidatorFilter>();
         //Add filter for validation of charges
     }

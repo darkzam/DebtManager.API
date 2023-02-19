@@ -1,4 +1,5 @@
-﻿using DebtManager.Application.Common.Interfaces;
+﻿using DebtManager.API.Filters;
+using DebtManager.Application.Common.Interfaces;
 using DebtManager.Domain.Models;
 
 public class PostDebt : BaseEndpoint<Debt>
@@ -9,7 +10,8 @@ public class PostDebt : BaseEndpoint<Debt>
     public override void Initialize()
     {
         WebApplication.MapPost(Route.OriginalString, ProcessRequest)
-                      .WithTags("Debts");
+                      .WithTags("Debts")
+                      .AddEndpointFilter<AuthorizationFilter>();
     }
 
     private async Task<IResult> ProcessRequest(DebtDto debtDto, IUnitOfWork unitOfWork)

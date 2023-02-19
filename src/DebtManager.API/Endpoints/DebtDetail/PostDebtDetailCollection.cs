@@ -13,6 +13,7 @@ public class PostDebtDetailCollection : BaseEndpoint<DebtDetail>
     {
         WebApplication.MapPost($"{Route.OriginalString}s", ProcessRequest)
                       .WithTags("DebtDetails")
+                      .AddEndpointFilter<AuthorizationFilter>()
                       .AddEndpointFilter<DebtValidatorFilter>()
                       .AddEndpointFilter<DebtDetailGroupValidatorFilter>();
     }

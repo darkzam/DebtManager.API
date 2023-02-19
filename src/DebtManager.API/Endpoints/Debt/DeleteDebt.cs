@@ -1,4 +1,5 @@
-﻿using DebtManager.Application.Common.Interfaces;
+﻿using DebtManager.API.Filters;
+using DebtManager.Application.Common.Interfaces;
 using DebtManager.Domain.Models;
 
 public class DeleteDebt : BaseEndpoint<Debt>
@@ -9,7 +10,8 @@ public class DeleteDebt : BaseEndpoint<Debt>
     public override void Initialize()
     {
         WebApplication.MapDelete($"{Route.OriginalString}/{{id}}", ProcessRequest)
-                      .WithTags("Debts");
+                      .WithTags("Debts")
+                      .AddEndpointFilter<AuthorizationFilter>();
     }
 
     private async Task<IResult> ProcessRequest(Guid id, IUnitOfWork unitOfWork)
