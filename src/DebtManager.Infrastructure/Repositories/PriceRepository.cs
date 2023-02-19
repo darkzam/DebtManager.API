@@ -2,6 +2,7 @@
 using DebtManager.Domain.Models;
 using DebtManager.Infrastructure.Contexts;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace DebtManager.Infrastructure.Repositories
 {
@@ -13,6 +14,15 @@ namespace DebtManager.Infrastructure.Repositories
         public override async Task<IEnumerable<Price>> GetAll()
         {
             return await _dbContext.Set<Price>()
+                                   .Include(x => x.Product)
+                                   .ToListAsync();
+        }
+
+        public override async Task<IEnumerable<Price>> SearchBy(Expression<Func<Price, bool>> predicate)
+        {
+            return await _dbContext.Set<Price>()
+                                   .Where(predicate)
+                                   .Include(x => x.Business)
                                    .Include(x => x.Product)
                                    .ToListAsync();
         }
