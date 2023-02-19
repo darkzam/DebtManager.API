@@ -10,6 +10,7 @@ public class GetDebtDetailCollection : BaseEndpoint<DebtDetail>
     public override void Initialize()
     {
         WebApplication.MapGet($"{Route.OriginalString}s", ProcessRequest)
+                      .WithTags("DebtDetails")
                       .AddEndpointFilter<DebtValidatorFilter>();
     }
 

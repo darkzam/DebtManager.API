@@ -9,7 +9,7 @@ public class PostDebt : BaseEndpoint<Debt>
     public override void Initialize()
     {
         WebApplication.MapPost(Route.OriginalString, ProcessRequest)
-                      .WithTags("Debt");
+                      .WithTags("Debts");
     }
 
     private async Task<IResult> ProcessRequest(DebtDto debtDto, IUnitOfWork unitOfWork)

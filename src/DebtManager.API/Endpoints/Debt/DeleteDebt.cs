@@ -9,7 +9,7 @@ public class DeleteDebt : BaseEndpoint<Debt>
     public override void Initialize()
     {
         WebApplication.MapDelete($"{Route.OriginalString}/{{id}}", ProcessRequest)
-                      .WithTags("Debt");
+                      .WithTags("Debts");
     }
 
     private async Task<IResult> ProcessRequest(Guid id, IUnitOfWork unitOfWork)

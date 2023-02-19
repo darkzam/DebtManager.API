@@ -9,7 +9,7 @@ public class GetDebt : BaseEndpoint<Debt>
     public override void Initialize()
     {
         WebApplication.MapGet(Route.OriginalString, ProcessRequest)
-                      .WithTags("Debt");
+                      .WithTags("Debts");
     }
 
     private async Task<IResult> ProcessRequest(IUnitOfWork unitOfWork)
