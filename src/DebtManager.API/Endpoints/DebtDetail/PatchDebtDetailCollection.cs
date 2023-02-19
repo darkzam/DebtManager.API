@@ -12,6 +12,7 @@ public class PatchDebtDetailCollection : BaseEndpoint<DebtDetail>
     public override void Initialize()
     {
         WebApplication.MapPatch($"{Route.OriginalString}s", ProcessRequest)
+                      .WithTags("DebtDetails")
                       .AddEndpointFilter<DebtValidatorFilter>()
                       .AddEndpointFilter<DebtDetailGroupValidatorFilter>();
     }

@@ -16,6 +16,7 @@ public static class DebtDetailUserEndpoints
     private static IList<BaseEndpoint<DebtDetailUser>> RegisterEndpoints(WebApplication webApplication)
     {
         //To-Do implement a mechanism to provide routes for parent/children like routes.
-        return new List<BaseEndpoint<DebtDetailUser>> { new PostDebtDetailUserCollection(new Uri($"{baseRoute}Debt/{{debtCode}}/", UriKind.Relative), webApplication) };
+        return new List<BaseEndpoint<DebtDetailUser>> { new PostDebtDetailUserCollection(new Uri($"{baseRoute}Debt/{{debtCode}}/", UriKind.Relative), webApplication),
+                                                        new GetDebtDetailUserCollection(new Uri($"{baseRoute}Debt/{{debtCode}}/", UriKind.Relative), webApplication)};
     }
 }
