@@ -13,4 +13,11 @@ public static class StringExtensions
                                 && !char.IsPunctuation(c)
                                 ));
     }
+
+    public static string RemoveSpaces(this string text)
+    {
+        return new string(text.ToCharArray()
+            .Where(c => !Char.IsWhiteSpace(c))
+            .ToArray());
+    }
 }
