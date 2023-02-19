@@ -13,6 +13,7 @@ public class PostDebtDetailUserCollection : BaseEndpoint<DebtDetailUser>
     public override void Initialize()
     {
         WebApplication.MapPost($"{BasePath.OriginalString}Charges", ProcessRequest)
+                      .WithTags("Charges")
                       .AddEndpointFilter<DebtValidatorFilter>();
         //Add filter for validation of charges
     }
