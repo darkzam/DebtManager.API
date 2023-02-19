@@ -13,7 +13,7 @@ public class GetDebtDetailCollection : BaseEndpoint<DebtDetail>
                       .WithTags("DebtDetails")
                       .AddEndpointFilter<AuthorizationFilter>()
                       .AddEndpointFilter<DebtValidatorFilter>();
-    }//
+    }/////
 
     private async Task<IResult> ProcessRequest([FromRoute] string debtCode,
                                                IUnitOfWork unitOfWork,
