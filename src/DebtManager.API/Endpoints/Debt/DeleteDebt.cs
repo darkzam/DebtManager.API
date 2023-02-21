@@ -27,6 +27,6 @@ public class DeleteDebt : BaseEndpoint<Debt>
 
         await unitOfWork.CompleteAsync();
 
-        return Results.Ok();
+        return Results.NoContent();
     }
 }

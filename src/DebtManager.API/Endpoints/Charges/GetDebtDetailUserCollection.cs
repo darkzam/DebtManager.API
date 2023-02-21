@@ -43,6 +43,7 @@ public class GetDebtDetailUserCollection : BaseEndpoint<DebtDetailUser>
                 Total = x.Total,
                 Charges = currentCharges.Where(y => y.DebtDetail.Id == x.DebtDetail.Id).Select(z => new ChargePorcentage()
                 {
+                    Id = z.Id.ToString(),
                     Username = z.User.Username,
                     Value = z.Porcentage
                 })

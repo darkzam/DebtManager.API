@@ -17,6 +17,7 @@ public static class DebtDetailUserEndpoints
     {
         //To-Do implement a mechanism to provide routes for parent/children like routes.
         return new List<BaseEndpoint<DebtDetailUser>> { new PostDebtDetailUserCollection(new Uri($"{baseRoute}Debt/{{debtCode}}/", UriKind.Relative), webApplication),
-                                                        new GetDebtDetailUserCollection(new Uri($"{baseRoute}Debt/{{debtCode}}/", UriKind.Relative), webApplication)};
+                                                        new GetDebtDetailUserCollection(new Uri($"{baseRoute}Debt/{{debtCode}}/", UriKind.Relative), webApplication),
+                                                        new DeleteDebtDetailUser(new Uri($"{baseRoute}Debt/{{debtCode}}/", UriKind.Relative), webApplication)};
     }
 }
