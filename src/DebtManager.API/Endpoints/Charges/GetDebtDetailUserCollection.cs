@@ -19,10 +19,30 @@ public class GetDebtDetailUserCollection : BaseEndpoint<DebtDetailUser>
     }
 
     private async Task<IResult> ProcessRequest([FromRoute] string debtCode,
+                                               [FromQuery] string? username,
                                                IUnitOfWork unitOfWork,
                                                HttpContext context)
     {
         var debt = context.Items["debt"] as Debt;
+
+        if (!string.IsNullOrWhiteSpace(username))
+        {
+            username = username.Trim()
+                               .ToLower()
+                               .RemoveAccents()
+                               .RemoveSpaces();
+
+            var user = (await unitOfWork.UserRepository.SearchBy(x => x.Username == username)).FirstOrDefault();
+
+            if (user is null)
+            {
+                return Results.NotFound("Username not found.");
+            }
+
+            var result = await GetChargesByUsername(user, unitOfWork);
+
+            return result;
+        }
 
         var currentDetails = await unitOfWork.DebtDetailRepository.SearchBy(x => x.Debt.Id == debt.Id);
 
@@ -47,6 +67,25 @@ public class GetDebtDetailUserCollection : BaseEndpoint<DebtDetailUser>
                     Username = z.User.Username,
                     Value = z.Porcentage
                 })
+            })
+        });
+
+        return Results.Ok(groupByProduct);
+    }
+
+    private async Task<IResult> GetChargesByUsername(User user,
+                                                     IUnitOfWork unitOfWork)
+    {
+        var currentCharges = await unitOfWork.DebtDetailUserRepository.SearchBy(x => x.User.Id == user.Id);
+
+        var groupByProduct = currentCharges.GroupBy(x => x.DebtDetail.Product).Select(x => new
+        {
+            ProductName = x.Key.Name,
+            Charges = x.Select(y => new ChargePorcentage()
+            {
+                Id = y.Id.ToString(),
+                Username = y.User.Username,
+                Value = y.Porcentage
             })
         });
 
