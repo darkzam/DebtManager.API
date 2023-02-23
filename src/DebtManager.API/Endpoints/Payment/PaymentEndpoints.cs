@@ -17,6 +17,7 @@ public static class PaymentEndpoints
     {
         //To-Do implement a mechanism to provide routes for parent/children like routes.
         return new List<BaseEndpoint<Payment>> { new PostPaymentCollection(new Uri($"{baseRoute}Debt/{{debtCode}}/", UriKind.Relative), webApplication),
-                                                 new PatchPaymentCollection(new Uri($"{baseRoute}Debt/{{debtCode}}/", UriKind.Relative), webApplication)};
+                                                 new PatchPaymentCollection(new Uri($"{baseRoute}Debt/{{debtCode}}/", UriKind.Relative), webApplication),
+                                                 new DeletePayment(new Uri($"{baseRoute}Debt/{{debtCode}}/", UriKind.Relative), webApplication)};
     }
 }
