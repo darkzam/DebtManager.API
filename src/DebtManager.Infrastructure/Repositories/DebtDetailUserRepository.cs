@@ -16,6 +16,8 @@ namespace DebtManager.Infrastructure.Repositories
             return await _dbContext.Set<DebtDetailUser>()
                                    .Where(predicate)
                                    .Include(x => x.User)
+                                   .Include(x => x.DebtDetail)
+                                   .ThenInclude(x => x.Product)
                                    .ToListAsync();
         }
     }
