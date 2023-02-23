@@ -15,5 +15,6 @@ namespace DebtManager.Infrastructure.Contexts
         public DbSet<User> User { get; set; }
         public DbSet<Business> Business { get; set; }
         public DbSet<Price> Price { get; set; }
+        public DbSet<Payment> Payment { get; set; }
     }
 }
