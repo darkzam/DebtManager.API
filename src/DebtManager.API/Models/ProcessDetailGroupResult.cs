@@ -14,6 +14,7 @@ namespace DebtManager.API.Models
     {
         Add,
         Remove,
+        Update,
         None
     }
 }

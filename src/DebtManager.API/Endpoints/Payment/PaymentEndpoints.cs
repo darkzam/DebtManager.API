@@ -16,6 +16,7 @@ public static class PaymentEndpoints
     private static IList<BaseEndpoint<Payment>> RegisterEndpoints(WebApplication webApplication)
     {
         //To-Do implement a mechanism to provide routes for parent/children like routes.
-        return new List<BaseEndpoint<Payment>> { new PostPaymentCollection(new Uri($"{baseRoute}Debt/{{debtCode}}/", UriKind.Relative), webApplication) };
+        return new List<BaseEndpoint<Payment>> { new PostPaymentCollection(new Uri($"{baseRoute}Debt/{{debtCode}}/", UriKind.Relative), webApplication),
+                                                 new PatchPaymentCollection(new Uri($"{baseRoute}Debt/{{debtCode}}/", UriKind.Relative), webApplication)};
     }
 }

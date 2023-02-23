@@ -4,21 +4,21 @@ using DebtManager.Application.Common.Interfaces;
 using DebtManager.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 
-public class PostPaymentCollection : BaseEndpoint<Payment>
+public class PatchPaymentCollection : BaseEndpoint<Payment>
 {
-    public PostPaymentCollection(Uri baseRoute, WebApplication webApplication) : base(baseRoute, webApplication)
+    public PatchPaymentCollection(Uri baseRoute, WebApplication webApplication) : base(baseRoute, webApplication)
     { }
 
     public override void Initialize()
     {
-        WebApplication.MapPost($"{BasePath.OriginalString}Payments", ProcessRequest)
+        WebApplication.MapPatch($"{BasePath.OriginalString}Payments", ProcessRequest)
                       .WithTags("Payments")
                       .AddEndpointFilter<AuthorizationFilter>()
                       .AddEndpointFilter<DebtValidatorFilter>();
     }
 
     private async Task<IResult> ProcessRequest([FromRoute] string debtCode,
-                                               [FromBody] IEnumerable<PostPaymentDto> payments,
+                                               [FromBody] IEnumerable<PatchPaymentDto> payments,
                                                IUnitOfWork unitOfWork,
                                                HttpContext context)
     {
@@ -40,55 +40,50 @@ public class PostPaymentCollection : BaseEndpoint<Payment>
             return Results.BadRequest(error.Message);
         }
 
-        var addPayments = results.Where(x => x.Payment != null
-                                           && x.Operation == EntityOperation.Add)
+        var updatedPayments = results.Where(x => x.Payment != null
+                                           && x.Operation == EntityOperation.Update)
                                    .Select(x => x.Payment);
 
-        unitOfWork.PaymentRepository.CreateCollection(addPayments);
+        unitOfWork.PaymentRepository.UpdateCollection(updatedPayments);
 
         await unitOfWork.CompleteAsync();
 
-        return Results.Ok(addPayments);
+        return Results.Ok(updatedPayments);
     }
 
-    private async Task<ProcessPaymentResult> ProcessPayment(PostPaymentDto payment,
+    private async Task<ProcessPaymentResult> ProcessPayment(PatchPaymentDto payment,
                                                             IUnitOfWork unitOfWork)
     {
-        var charge = await unitOfWork.DebtDetailUserRepository.Find(payment.ChargeId);
+        var currentPayment = (await unitOfWork.PaymentRepository.SearchBy(x => x.Id == payment.Id)).FirstOrDefault();
 
-        if (charge is null)
+        if (currentPayment is null)
         {
             return new ProcessPaymentResult()
             {
                 Success = false,
-                Message = "ChargeId not found in the system.",
+                Message = "PaymentId not found.",
             };
         }
 
-        var currentPayment = await unitOfWork.PaymentRepository.SearchBy(x => x.DebtDetailUser.Id == charge.Id);
+        var status = PaymentStatus.None;
 
-        if (currentPayment.Any())
+        if (!Enum.TryParse(payment.Status, out status))
         {
             return new ProcessPaymentResult()
             {
                 Success = false,
-                Message = "There's already a payment for the specified ChargeId.",
+                Message = "Status is not valid.",
             };
         }
 
-        var newPayment = new Payment()
-        {
-            DebtDetailUser = charge,
-            Status = PaymentStatus.Draft,
-            CreatedDate = DateTime.UtcNow,
-            UpdatedDate = DateTime.UtcNow
-        };
+        currentPayment.Status = status;
+        currentPayment.UpdatedDate = DateTime.Now;
 
         return new ProcessPaymentResult()
         {
             Success = true,
-            Payment = newPayment,
-            Operation = EntityOperation.Add
+            Payment = currentPayment,
+            Operation = EntityOperation.Update
         };
     }
 }
