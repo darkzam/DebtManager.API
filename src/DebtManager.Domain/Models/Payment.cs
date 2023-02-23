@@ -7,13 +7,13 @@
         public PaymentStatus Status { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime UpdatedDate { get; set; }
+    }
 
-        public enum PaymentStatus
-        {
-            None = 0,
-            Draft = 1,
-            Approved = 2,
-            Denied = 3
-        }
+    public enum PaymentStatus
+    {
+        None = 0,
+        Draft = 1,
+        Approved = 2,
+        Denied = 3
     }
 }
