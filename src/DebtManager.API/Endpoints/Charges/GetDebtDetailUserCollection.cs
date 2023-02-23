@@ -29,7 +29,6 @@ public class GetDebtDetailUserCollection : BaseEndpoint<DebtDetailUser>
         {
             username = username.Trim()
                                .ToLower()
-                               .RemoveAccents()
                                .RemoveSpaces();
 
             var user = (await unitOfWork.UserRepository.SearchBy(x => x.Username == username)).FirstOrDefault();
