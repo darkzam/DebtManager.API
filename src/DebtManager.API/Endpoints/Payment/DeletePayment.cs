@@ -10,7 +10,7 @@ public class DeletePayment : BaseEndpoint<Payment>
 
     public override void Initialize()
     {
-        WebApplication.MapDelete($"{BasePath.OriginalString}Payments", ProcessRequest)
+        WebApplication.MapDelete($"{BasePath.OriginalString}Payments/{{paymentId}}", ProcessRequest)
                       .WithTags("Payments")
                       .AddEndpointFilter<AuthorizationFilter>()
                       .AddEndpointFilter<DebtValidatorFilter>();
