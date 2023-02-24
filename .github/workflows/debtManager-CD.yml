@@ -32,6 +32,7 @@ jobs:
         files: '${{env.AZURE_APPSERVICE_PATH}}/myApp/appsettings.Development.json'
       env:
         ConnectionStrings.DebtManagerDb: '${{ secrets.CONNECTIONSTRING_DEBTMANAGER_DEV }}'
+        Notification.Webhook: '${{ secrets.BOTNORREA_WEBHOOK }}'
         
     - name: Deploy to App Service
       uses: azure/webapps-deploy@v2
