@@ -2,6 +2,7 @@ using DebtManager.API.Models;
 using DebtManager.Application.Common.Interfaces;
 using DebtManager.Infrastructure.Contexts;
 using DebtManager.Infrastructure.Repositories;
+using DebtManager.Application.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,8 @@ builder.Services.AddDbContext<DebtManagerContext>(options =>
 });
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddOptions<AuthSettings>().BindConfiguration("Authentication");
+builder.Services.AddOptions<NotificationSettings>().BindConfiguration("Notification");
+builder.Services.AddHttpClient<INotificationService, NotificationService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
