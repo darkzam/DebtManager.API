@@ -1,5 +1,4 @@
 ﻿using DebtManager.API.Filters;
-using DebtManager.API.Models;
 using DebtManager.Application.Common.Interfaces;
 using DebtManager.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +13,8 @@ public class GetDebtDetailUserCollection : BaseEndpoint<DebtDetailUser>
         WebApplication.MapGet($"{BasePath.OriginalString}Charges", ProcessRequest)
                       .WithTags("Charges")
                       .AddEndpointFilter<AuthorizationFilter>()
-                      .AddEndpointFilter<DebtValidatorFilter>();
+                      .AddEndpointFilter<DebtValidatorFilter>()
+                      .AddEndpointFilter<InvoiceResultFilter>();
         //Add filter for validation of charges
     }
 
@@ -45,43 +45,7 @@ public class GetDebtDetailUserCollection : BaseEndpoint<DebtDetailUser>
             return result;
         }
 
-        var prices = await unitOfWork.PriceRepository.SearchBy(x => x.Business.Id == debt.Business.Id);
-
-        var latestPrices = prices.GroupBy(x => x.Product)
-                                 .Select(x => x.OrderByDescending(y => y.Date).First());
-
-        var currentDetails = await unitOfWork.DebtDetailRepository.SearchBy(x => x.Debt.Id == debt.Id);
-
-        var currentDetailsIds = currentDetails.Select(x => x.Id);
-
-        var currentCharges = await unitOfWork.DebtDetailUserRepository.SearchBy(x => currentDetailsIds.Contains(x.DebtDetail.Id));
-
-        var groupedCharges = currentCharges.GroupBy(x => x.DebtDetail).Select(x => new { DebtDetail = x.Key, Total = x.Sum(y => y.Porcentage), Users = x.Select(z => z.User) });
-
-        var leftJoin = currentDetails.GroupJoin(groupedCharges, x => x.Id, y => y.DebtDetail.Id, (x, y) => new DebtDetailChargesEntry { DebtDetail = x, Total = y.FirstOrDefault()?.Total ?? 0, Users = y.SelectMany(z => z.Users).ToList() }).ToList();
-
-        var groupByProduct = leftJoin.GroupBy(x => x.DebtDetail.Product).Join(latestPrices, x => x.Key.Id, y => y.Product.Id, (x, p) => new
-        {
-            ProductName = x.Key.Name,
-            Amount = x.Count(),
-            Price = p.Value,
-            Subtotal = (x.Count() * p.Value),
-            Total = (x.Count() * p.Value) * (1 + (debt.ServiceRate / 100)),
-            ItemDetails = x.Select(x => new
-            {
-                Coverage = x.Total,
-                Charges = currentCharges.Where(y => y.DebtDetail.Id == x.DebtDetail.Id).Select(z => new
-                {
-                    Id = z.Id.ToString(),
-                    Username = z.User.Username,
-                    Value = z.Porcentage,
-                    Subtotal = p.Value * (z.Porcentage / 100),
-                    Total = (p.Value * (z.Porcentage / 100)) * (1 + (debt.ServiceRate / 100))
-                })
-            })
-        });
-
-        return Results.Ok(groupByProduct);
+        return Results.Ok();
     }
 
     private async Task<IResult> GetChargesByUsername(Debt debt,
