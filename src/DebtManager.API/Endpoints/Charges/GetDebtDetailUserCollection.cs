@@ -38,10 +38,17 @@ public class GetDebtDetailUserCollection : BaseEndpoint<DebtDetailUser>
                 return Results.NotFound("Username not found.");
             }
 
-            var result = await GetChargesByUsername(user, unitOfWork);
+            var result = await GetChargesByUsername(debt,
+                                                    user,
+                                                    unitOfWork);
 
             return result;
         }
+
+        var prices = await unitOfWork.PriceRepository.SearchBy(x => x.Business.Id == debt.Business.Id);
+
+        var latestPrices = prices.GroupBy(x => x.Product)
+                                 .Select(x => x.OrderByDescending(y => y.Date).First());
 
         var currentDetails = await unitOfWork.DebtDetailRepository.SearchBy(x => x.Debt.Id == debt.Id);
 
@@ -53,18 +60,23 @@ public class GetDebtDetailUserCollection : BaseEndpoint<DebtDetailUser>
 
         var leftJoin = currentDetails.GroupJoin(groupedCharges, x => x.Id, y => y.DebtDetail.Id, (x, y) => new DebtDetailChargesEntry { DebtDetail = x, Total = y.FirstOrDefault()?.Total ?? 0, Users = y.SelectMany(z => z.Users).ToList() }).ToList();
 
-        var groupByProduct = leftJoin.GroupBy(x => x.DebtDetail.Product).Select(x => new
+        var groupByProduct = leftJoin.GroupBy(x => x.DebtDetail.Product).Join(latestPrices, x => x.Key.Id, y => y.Product.Id, (x, p) => new
         {
             ProductName = x.Key.Name,
             Amount = x.Count(),
+            Price = p.Value,
+            Subtotal = (x.Count() * p.Value),
+            Total = (x.Count() * p.Value) * (1 + (debt.ServiceRate / 100)),
             ItemDetails = x.Select(x => new
             {
-                Total = x.Total,
-                Charges = currentCharges.Where(y => y.DebtDetail.Id == x.DebtDetail.Id).Select(z => new ChargePorcentage()
+                Coverage = x.Total,
+                Charges = currentCharges.Where(y => y.DebtDetail.Id == x.DebtDetail.Id).Select(z => new
                 {
                     Id = z.Id.ToString(),
                     Username = z.User.Username,
-                    Value = z.Porcentage
+                    Value = z.Porcentage,
+                    Subtotal = p.Value * (z.Porcentage / 100),
+                    Total = (p.Value * (z.Porcentage / 100)) * (1 + (debt.ServiceRate / 100))
                 })
             })
         });
@@ -72,21 +84,34 @@ public class GetDebtDetailUserCollection : BaseEndpoint<DebtDetailUser>
         return Results.Ok(groupByProduct);
     }
 
-    private async Task<IResult> GetChargesByUsername(User user,
+    private async Task<IResult> GetChargesByUsername(Debt debt,
+                                                     User user,
                                                      IUnitOfWork unitOfWork)
     {
+        var prices = await unitOfWork.PriceRepository.SearchBy(x => x.Business.Id == debt.Business.Id);
+
+        var latestPrices = prices.GroupBy(x => x.Product)
+                                 .Select(x => x.OrderByDescending(y => y.Date).First());
+
         var currentCharges = await unitOfWork.DebtDetailUserRepository.SearchBy(x => x.User.Id == user.Id);
 
-        var groupByProduct = currentCharges.GroupBy(x => x.DebtDetail.Product).Select(x => new
-        {
-            ProductName = x.Key.Name,
-            Charges = x.Select(y => new ChargePorcentage()
-            {
-                Id = y.Id.ToString(),
-                Username = y.User.Username,
-                Value = y.Porcentage
-            })
-        });
+        var groupByProduct = currentCharges.GroupBy(x => x.DebtDetail.Product)
+                                           .Join(latestPrices,
+                                                 x => x.Key.Id,
+                                                 y => y.Product.Id,
+                                                (x, p) => new
+                                                {
+                                                    ProductName = x.Key.Name,
+                                                    Price = p.Value,
+                                                    Charges = x.Select(y => new
+                                                    {
+                                                        Id = y.Id.ToString(),
+                                                        Username = y.User.Username,
+                                                        Value = y.Porcentage,
+                                                        Subtotal = p.Value * (y.Porcentage / 100),
+                                                        Total = (p.Value * (y.Porcentage / 100)) * (1 + (debt.ServiceRate / 100))
+                                                    })
+                                                });
 
         return Results.Ok(groupByProduct);
     }
