@@ -59,6 +59,8 @@ public class GetDebtDetailUserCollection : BaseEndpoint<DebtDetailUser>
 
         var currentCharges = await unitOfWork.DebtDetailUserRepository.SearchBy(x => x.User.Id == user.Id);
 
+        decimal ipoconsumo = (decimal)(debt.IpoconsumoTax ? 8.0 / 100 : 0);
+
         var groupByProduct = currentCharges.GroupBy(x => x.DebtDetail.Product)
                                            .Join(latestPrices,
                                                  x => x.Key.Id,
@@ -73,7 +75,7 @@ public class GetDebtDetailUserCollection : BaseEndpoint<DebtDetailUser>
                                                         Username = y.User.Username,
                                                         Value = y.Porcentage,
                                                         Subtotal = p.Value * (y.Porcentage / 100),
-                                                        Total = (p.Value * (y.Porcentage / 100)) * (1 + (debt.ServiceRate / 100))
+                                                        Total = (p.Value * (y.Porcentage / 100)) * (1 + (debt.ServiceRate / 100) + ipoconsumo)
                                                     })
                                                 });
 
