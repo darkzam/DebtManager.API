@@ -41,13 +41,15 @@ namespace DebtManager.API.Filters
 
             var leftJoin = currentDetails.GroupJoin(groupedCharges, x => x.Id, y => y.DebtDetail.Id, (x, y) => new DebtDetailChargesEntry { DebtDetail = x, Total = y.FirstOrDefault()?.Total ?? 0, Users = y.SelectMany(z => z.Users).ToList() }).ToList();
 
+            decimal ipoconsumo = (decimal)(debt.IpoconsumoTax ? 8.0 / 100 : 0);
+
             var groupByProduct = leftJoin.GroupBy(x => x.DebtDetail.Product).Join(latestPrices, x => x.Key.Id, y => y.Product.Id, (x, p) => new
             {
                 ProductName = x.Key.Name,
                 Amount = x.Count(),
                 Price = p.Value,
                 Subtotal = (x.Count() * p.Value),
-                Total = (x.Count() * p.Value) * (1 + (debt.ServiceRate / 100)),
+                Total = (x.Count() * p.Value) * (1 + (debt.ServiceRate / 100) + ipoconsumo),
                 ItemDetails = x.Select(x => new
                 {
                     Coverage = x.Total,
@@ -57,7 +59,7 @@ namespace DebtManager.API.Filters
                         Username = z.User.Username,
                         Value = z.Porcentage,
                         Subtotal = p.Value * (z.Porcentage / 100),
-                        Total = (p.Value * (z.Porcentage / 100)) * (1 + (debt.ServiceRate / 100))
+                        Total = (p.Value * (z.Porcentage / 100)) * (1 + (debt.ServiceRate / 100) + ipoconsumo)
                     })
                 })
             });

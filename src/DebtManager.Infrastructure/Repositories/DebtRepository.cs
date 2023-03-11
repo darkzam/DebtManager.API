@@ -19,5 +19,13 @@ namespace DebtManager.Infrastructure.Repositories
                                    .Include(x => x.Host)
                                    .ToListAsync();
         }
+
+        public override async Task<IEnumerable<Debt>> GetAll()
+        {
+            return await _dbContext.Set<Debt>()
+                                   .Include(x => x.Business)
+                                   .Include(x => x.Host)
+                                   .ToListAsync();
+        }
     }
 }
