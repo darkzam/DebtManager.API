@@ -15,6 +15,7 @@ namespace DebtManager.Infrastructure.Repositories
         {
             return await _dbContext.Set<Price>()
                                    .Include(x => x.Product)
+                                   .Include(x => x.Business)
                                    .ToListAsync();
         }
 
