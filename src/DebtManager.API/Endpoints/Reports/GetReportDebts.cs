@@ -31,10 +31,13 @@ namespace DebtManager.API.Endpoints.Reports
 
             var currentDetailsIds = currentDetails.Select(x => x.Id);
 
-            //To-DO filter by unpaid charges => No approved payment related
             var currentCharges = await unitOfWork.DebtDetailUserRepository.SearchBy(x => currentDetailsIds.Contains(x.DebtDetail.Id));
 
-            var currentChargesWithPricing = currentCharges.Join(latestPrices,
+            var currentPayments = await unitOfWork.PaymentRepository.SearchBy(x => currentCharges.Select(x => x.Id).Contains(x.DebtDetailUser.Id));
+
+            var unpaidCurrentCharges = currentCharges.Except(currentPayments.Select(x => x.DebtDetailUser));
+
+            var currentChargesWithPricing = unpaidCurrentCharges.Join(latestPrices,
                                                                 w => new { w.DebtDetail.Debt.Business, w.DebtDetail.Product },
                                                                 p => new { p.Business, p.Product },
                                                                 (w, p) => new
