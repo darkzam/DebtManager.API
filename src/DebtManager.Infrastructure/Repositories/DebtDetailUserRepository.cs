@@ -14,11 +14,13 @@ namespace DebtManager.Infrastructure.Repositories
         public override async Task<IEnumerable<DebtDetailUser>> SearchBy(Expression<Func<DebtDetailUser, bool>> predicate)
         {
             return await _dbContext.Set<DebtDetailUser>()
-                                   .Where(predicate)
-                                   .Include(x => x.User)
-                                   .Include(x => x.DebtDetail)
-                                   .ThenInclude(x => x.Product)
-                                   .ToListAsync();
+                                  .Where(predicate)
+                                  .Include(x => x.User)
+                                  .Include(x => x.DebtDetail)
+                                  .ThenInclude(x => x.Product)
+                                  .Include(x => x.DebtDetail)
+                                  .ThenInclude(x => x.Debt)
+                                  .ToListAsync();
         }
     }
 }
